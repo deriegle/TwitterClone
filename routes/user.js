@@ -18,14 +18,14 @@ router.post("/register", function(req, res){
     var newUser = new User(
         {
             user: {
-                firstname: req.body.firstname,
-                lastname: req.body.lastname,
-                location: req.body.location,
-                birthday: req.body.birthday,
-                email: req.body.email,
-                description: ""
+                firstname   : req.body.firstname,
+                lastname    : req.body.lastname,
+                location    : req.body.location,
+                birthday    : req.body.birthday,
+                email       : req.body.email,
+                description : ""
             },
-            username: req.body.username
+            username        : req.body.username
         });
 
     User.register(newUser, req.body.password, function(err){
@@ -102,18 +102,21 @@ router.get("/:username", function(req, res) {
 router.put("/:username", isLoggedIn, function(req, res){
     if(res.locals.currentUser.username == req.params.username){
         // Current Logged In user is the same as the profile being edited
-        User.findOne({username: req.params.username}, function(err, profile){
+        User.findOne( { username: req.params.username }, function(err, profile){
             if(err){
                 console.log(err);
                 res.redirect("/tweets");
             } else {
-                profile.user.firstname      = req.body.firstname;
-                profile.user.lastname       = req.body.lastname;
-                profile.user.description    = req.body.description;
-                profile.user.location       = req.body.location;
-                profile.user.image          = req.body.image;
-                profile.user.birthday       = req.body.birthday;
-
+                // Add updated information to user
+                profile.user = {
+                    firstname   : req.body.firstname,
+                    lastname    : req.body.lastname,
+                    description : req.body.description,
+                    location    : req.body.location,
+                    image       : req.body.image,
+                    birthday    : req.body.birthday
+                };
+            
                 profile.save(function(err){
                     if(err){
                         // Couldn't save the profile

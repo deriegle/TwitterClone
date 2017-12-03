@@ -10,11 +10,12 @@ const express               = require("express"),
     path                    = require("path"),
     session                 = require("express-session"),
     PORT                    = 3001,
-    seedDB                  = require("./seeds"),
+    config                  = require("./config"),
+    //seedDB                  = require("./seeds"),
     app                     = express();
 
 /* connect to database */
-mongoose.connect("mongodb://localhost/twitter_clone_v3");
+mongoose.connect(config.dbURL);
 
 /* view engine setup */
 app.set("views", path.join(__dirname, "views"));
@@ -44,8 +45,9 @@ app.use(function(req, res, next){
     next();
 });
 
-/* seed database with sample tweets */
-seedDB();
+/* seed database with sample tweets & admin account 
+   check seeds.js for login information */
+//seedDB();
 
 /* add our routes */
 app.use("/", routes);

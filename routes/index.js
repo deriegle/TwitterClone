@@ -5,6 +5,42 @@ const Tweet = require("../models/tweet");
 const User = require("../models/user");
 const userRoutes = require("./user.js");
 
+function log(err){
+    console.error(err); 
+}
+
+function findUserTweets(user){
+    User.findOne({ username: user }, (err, profile) => {
+        if(err){
+
+            log("Error finding user: " + err);
+            
+        } else {
+            // If User Found in DB
+            console.log(profile);
+            if(profile) {
+
+                // Find Users Tweets
+                Tweet.find({user: {id: profile._id, username: profile.username}}, (err, usersTweets) =>{
+
+                    if(err){
+                        log("Error finding tweets from user: " + err);
+                    } else {
+                        // Return Users Tweets if found
+                        return usersTweets;
+                    }
+
+                });
+
+            } else {
+                // Return null if no user found
+                return null;
+            }
+        }
+
+    });
+}
+
 
 /* show home page */
 router.get("/", function(req, res) {
@@ -15,50 +51,44 @@ router.get("/", function(req, res) {
 router.get("/tweets", function(req, res) {
     //
     if (req.query.search) {
-        //console.log("Searching user DB for: " + req.query.search);
-        // Try to search for user with that username to see if it is a user in the DB
-        User.findOne({username: req.query.search}, function(err, profile){
-            if(err){
-                console.error(err);
-                res.redirect("/tweets");
-            } else {
-                //console.log(req.query.search);
-                if(profile){
-                    Tweet.find({user: {id: profile._id, username: profile.username}}, function(err, allTweets){
-                        //console.log("Searched for all tweets by " + profile.username);
-                        if(err){
-                            console.error(err);
-                            res.redirect("/tweets");
-                        } else {
-                            // Sort tweets by date (latest first) & show them on index page
-                            allTweets = (req.query.sortByDate == "1" ? oldestTweetsByDate(allTweets) : latestTweetsByDate(allTweets));
-                            res.render("index", { tweets: allTweets });
-                        }
-                    });
+
+        console.log(req.query.search);
+        
+        // Find User & Tweets in DB
+        var UsersTweets = findUserTweets(req.query.search);
+        if(UsersTweets != null | undefined){
+            // User & Tweets Found, Sort them & display on index page
+            UsersTweets = (req.query.sortByDate == "1" ? oldestTweetsByDate(UsersTweets) : latestTweetsByDate(UsersTweets));
+            res.render("index", { tweets: UsersTweets });
+        } else {
+            // No user found in DB, so find all tweets with specific searched string
+            
+            var pattern = ".*" + escapeRegex(req.query.search) + ".*";
+            console.log(pattern);
+
+            var regex = new RegExp(pattern, "gi");
+
+            
+            Tweet.find({ tweet: regex }, (err, allTweets) => {
+
+                if (err) {
+                    log(err);
                 } else {
-                    // User is not found in DB
-                    const regex = new RegExp(escapeRegex(req.query.search), "gi");
-                    // searches tweets based on search query
-                    Tweet.find({ tweet: regex }, function(err, allTweets) {
-                        //console.log("SEARCH TEST:");
-                        //console.log("Regex: " + regex);
-                        if (err) {
-                            console.log(err);
-                        } else {
-                            // Sort tweets by date
-                            allTweets = latestTweetsByDate(allTweets);
-                            res.render("index", { tweets: allTweets });
-                        }
-                    });
+                    
+                    // Sort Tweets by Date
+                    allTweets = latestTweetsByDate(allTweets);
+                    res.render("index", { tweets: allTweets });
+
                 }
-            }
-        });
+            });
+        }
+
     } else {
         // No search query, Find all tweets
         // Eventually find only tweets from those who the user follows
         Tweet.find({}, function(err, allTweets) {
             if (err) {
-                console.log(err);
+                log(err);
             } else {
                 // Sort tweets by date
                 allTweets = latestTweetsByDate(allTweets);
@@ -73,7 +103,7 @@ router.post("/tweets", isLoggedIn, function(req, res) {
     const newTweet = { tweet: req.body.tweet };
     User.findOne({"username": res.locals.currentUser.username},  function(err, profile){
         if(err){
-            console.log(err);
+            log(err);
             res.redirect("/tweets");
         } else {
             // Increment tweets on profile 
