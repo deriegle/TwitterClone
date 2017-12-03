@@ -28,6 +28,9 @@ coverage
 # Bower dependency directory (https://bower.io/)
 bower_components
 
+# Configuration Information (MongoDB, etc);
+config
+
 # node-waf configuration
 .lock-wscript
 

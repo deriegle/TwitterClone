@@ -105,7 +105,7 @@ router.route("/tweets")
     User.findOne({"username": res.locals.currentUser.username},  function(err, profile){
         if(err){
             log(err);
-            res.redirect("/tweets");
+            res.redirect("back");
         } else {
             // Increment tweets on profile 
             var tweetAmnt = profile.meta.tweets + 1;
@@ -115,13 +115,13 @@ router.route("/tweets")
             Tweet.create(newTweet, function(err, tweet) {
                 if (err) {
                     console.log(err);
-                    res.redirect("/tweets");
+                    res.redirect("back");
                 } else {
                     // Add user information to tweet (id, username)
                     tweet.user.id = res.locals.currentUser._id;
                     tweet.user.username = res.locals.currentUser.username;
                     tweet.save();
-                    res.redirect("/tweets");
+                    res.redirect("back");
                 }
             });
         } 
@@ -130,14 +130,14 @@ router.route("/tweets")
 });
 
 // DELETE - delete tweet from DB using MongoDB ID
-router.delete("/tweets/:id", isLoggedIn, function(req, res) {
+router.delete("/tweets/:id", isLoggedIn, (req, res) => {
     // Find the Tweet in the Database and remove it
     // /tweets/:id is the route that we are using to delete tweets
     // You get the :id from the route using "req.params.id"
-    Tweet.findById(req.params.id, function(err, tweet) {
+    Tweet.findById(req.params.id, (err, tweet) => {
         if (err) {
             console.log("Error finding Tweet : " + err);
-            res.redirect("/tweets");
+            res.redirect("back");
         } else {
             // Check to make sure the currentUser trying to delete tweet is the creator
             if (res.locals.currentUser.username == tweet.user.username) {
@@ -148,7 +148,7 @@ router.delete("/tweets/:id", isLoggedIn, function(req, res) {
                     if(err){
                         // Error Grabbing Profile
                         console.log("Error Grabbing Profile for Deletion : " + err);
-                        res.redirect("/tweets");
+                        res.redirect("back");
                     } else {
                         // Decrement tweets in profile
                         if(profile.meta.tweets > 0){
@@ -156,7 +156,7 @@ router.delete("/tweets/:id", isLoggedIn, function(req, res) {
                             profile.meta.tweets = tweetAmnt;
                             profile.save();
                         }
-                        res.redirect("/tweets");
+                        res.redirect("back");
                     }
                 }); 
             }
