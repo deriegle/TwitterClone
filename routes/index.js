@@ -47,8 +47,9 @@ router.get("/", function(req, res) {
     res.render("landing");
 });
 
+router.route("/tweets")
 // INDEX - show all tweets
-router.get("/tweets", function(req, res) {
+.get((req, res) => {
     //
     if (req.query.search) {
 
@@ -96,10 +97,10 @@ router.get("/tweets", function(req, res) {
             }
         });
     }
-});
+})
 
 // CREATE - add new tweet to DB
-router.post("/tweets", isLoggedIn, function(req, res) {
+.post(isLoggedIn, (req, res) => {
     const newTweet = { tweet: req.body.tweet };
     User.findOne({"username": res.locals.currentUser.username},  function(err, profile){
         if(err){
@@ -135,15 +136,18 @@ router.delete("/tweets/:id", isLoggedIn, function(req, res) {
     // You get the :id from the route using "req.params.id"
     Tweet.findById(req.params.id, function(err, tweet) {
         if (err) {
-            console.log(err);
+            console.log("Error finding Tweet : " + err);
             res.redirect("/tweets");
         } else {
             // Check to make sure the currentUser trying to delete tweet is the creator
             if (res.locals.currentUser.username == tweet.user.username) {
-                // remove tweet from DB & redirect
-                User.findOne({username: res.locals.currentUser}, function(err, profile){
+                tweet.remove();
+                console.log("Tweet Deleted");
+                
+                User.findOne({ username: res.locals.currentUser.username }, (err, profile) => {
                     if(err){
-                        console.log(err);
+                        // Error Grabbing Profile
+                        console.log("Error Grabbing Profile for Deletion : " + err);
                         res.redirect("/tweets");
                     } else {
                         // Decrement tweets in profile
@@ -152,8 +156,6 @@ router.delete("/tweets/:id", isLoggedIn, function(req, res) {
                             profile.meta.tweets = tweetAmnt;
                             profile.save();
                         }
-                        // Remove tweet from Tweets DB
-                        tweet.remove();
                         res.redirect("/tweets");
                     }
                 }); 
